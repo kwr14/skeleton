@@ -27,7 +27,7 @@ def Main():
         Targets = CreateTargets(MaxNumberOfTargets, MaxTarget)
     NumbersAllowed = FillNumbers(NumbersAllowed, TrainingGame, MaxNumber)
     PlayGame(Targets, NumbersAllowed, TrainingGame, MaxTarget, MaxNumber)
-    input()
+    print("See ya!")
 
 def PlayGame(Targets, NumbersAllowed, TrainingGame, MaxTarget, MaxNumber):
     Score = 0
@@ -35,6 +35,8 @@ def PlayGame(Targets, NumbersAllowed, TrainingGame, MaxTarget, MaxNumber):
     while not GameOver:
         DisplayState(Targets, NumbersAllowed, Score)
         UserInput = input("Enter an expression: ")
+        if UserInput == "QUIT":
+            GameOver = True
         print()
         if CheckIfUserInputValid(UserInput):
             UserInputInRPN = ConvertToRPN(UserInput)
@@ -52,7 +54,7 @@ def PlayGame(Targets, NumbersAllowed, TrainingGame, MaxTarget, MaxNumber):
     DisplayScore(Score)
 
 def CheckIfUserInputEvaluationIsATarget(Targets, UserInputInRPN, Score):
-    UserInputEvaluation = EvaluateRPN(UserInputInRPN)[=]'-'
+    UserInputEvaluation = EvaluateRPN(UserInputInRPN)
     UserInputEvaluationIsATarget = False
     if UserInputEvaluation != -1:
         for Count in range(0, len(Targets)):

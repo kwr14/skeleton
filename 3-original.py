@@ -6,6 +6,8 @@
 import re
 import random
 import math
+from pyexpat.errors import messages
+
 
 def Main():
     NumbersAllowed = []
@@ -27,22 +29,33 @@ def Main():
         Targets = CreateTargets(MaxNumberOfTargets, MaxTarget)
     NumbersAllowed = FillNumbers(NumbersAllowed, TrainingGame, MaxNumber)
     PlayGame(Targets, NumbersAllowed, TrainingGame, MaxTarget, MaxNumber)
-    input()
+    print("See ya!")
 
 def PlayGame(Targets, NumbersAllowed, TrainingGame, MaxTarget, MaxNumber):
+    global TheNumber
     Score = 0
     GameOver = False
+    isInTheAllowed = False
     while not GameOver:
         DisplayState(Targets, NumbersAllowed, Score)
         UserInput = input("Enter an expression: ")
+        if UserInput == "QUIT":
+            GameOver = True
         print()
         if CheckIfUserInputValid(UserInput):
             UserInputInRPN = ConvertToRPN(UserInput)
-            if CheckNumbersUsedAreAllInNumbersAllowed(NumbersAllowed, UserInputInRPN, MaxNumber):
-                IsTarget, Score = CheckIfUserInputEvaluationIsATarget(Targets, UserInputInRPN, Score)
+            isInTheAllowed, TheNumber =  CheckNumbersUsedAreAllInNumbersAllowed(NumbersAllowed, UserInputInRPN, MaxNumber)
+            if isInTheAllowed:
+                IsTarget, Score, message = CheckIfUserInputEvaluationIsATarget(Targets, UserInputInRPN, Score)
                 if IsTarget:
                     NumbersAllowed = RemoveNumbersUsed(UserInput, MaxNumber, NumbersAllowed)
                     NumbersAllowed = FillNumbers(NumbersAllowed, TrainingGame, MaxNumber)
+                # else:  if it is not evaluated to one of the target numbers
+                else:
+                    print(message)
+            else:
+                print(TheNumber, " is not in the allowed list")
+
         Score -= 1
         if Targets[0] != -1:
             GameOver = True
@@ -52,15 +65,18 @@ def PlayGame(Targets, NumbersAllowed, TrainingGame, MaxTarget, MaxNumber):
     DisplayScore(Score)
 
 def CheckIfUserInputEvaluationIsATarget(Targets, UserInputInRPN, Score):
-    UserInputEvaluation = EvaluateRPN(UserInputInRPN)[=]'-'
+    UserInputEvaluation = EvaluateRPN(UserInputInRPN)
     UserInputEvaluationIsATarget = False
+    messages = ""
     if UserInputEvaluation != -1:
         for Count in range(0, len(Targets)):
             if Targets[Count] == UserInputEvaluation:
                 Score += 2
                 Targets[Count] = -1
                 UserInputEvaluationIsATarget = True
-    return UserInputEvaluationIsATarget, Score
+        if not UserInputEvaluationIsATarget:
+            messages = "User expression does not evaluate to one of the target number"
+    return UserInputEvaluationIsATarget, Score, messages
 
 def RemoveNumbersUsed(UserInput, MaxNumber, NumbersAllowed):
     UserInputInRPN = ConvertToRPN(UserInput)
@@ -82,6 +98,7 @@ def UpdateTargets(Targets, TrainingGame, MaxTarget):
 
 def CheckNumbersUsedAreAllInNumbersAllowed(NumbersAllowed, UserInputInRPN, MaxNumber):
     Temp = []
+
     for Item in NumbersAllowed:
         Temp.append(Item)
     for Item in UserInputInRPN:
@@ -89,8 +106,9 @@ def CheckNumbersUsedAreAllInNumbersAllowed(NumbersAllowed, UserInputInRPN, MaxNu
             if int(Item) in Temp:
                 Temp.remove(int(Item))
             else:
-                return False
-    return True
+                return False, Item
+
+    return True, None
 
 def CheckValidNumber(Item, MaxNumber):
     if re.search("^[0-9]+$", Item) is not None:
@@ -197,9 +215,12 @@ def GetNumberFromUserInput(UserInput, Position):
 
 def CheckIfUserInputValid(UserInput):
     if re.search("^([0-9]+[\\+\\-\\*\\/])+[0-9]+$", UserInput) is not None:
+        if re.search("/0+(?![0-9])", UserInput):
+            print("Division by zero is not allowed")
+            return False
         return True
     else:
-        return False
+        print("This expression is not valid infix")
 
 def GetTarget(MaxTarget):
     return random.randint(1, MaxTarget)
